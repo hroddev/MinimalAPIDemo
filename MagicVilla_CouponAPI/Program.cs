@@ -77,7 +77,7 @@ app.MapPost("/api/coupon", async (IMapper _mapper,
     coupon.Id = CouponStore.couponList.OrderByDescending(u => u.Id).FirstOrDefault().Id + 1;
     CouponStore.couponList.Add(coupon);
     CouponDTO couponDTO = _mapper.Map<CouponDTO>(coupon);
-    
+
     response.Result = couponDTO;
     response.IsSuccess = true;
     response.StatusCode = HttpStatusCode.Created;
@@ -91,7 +91,6 @@ app.MapPut("/api/coupon", async (IMapper _mapper,
     IValidator<CouponUpdateDTO> _validation, [FromBody] CouponUpdateDTO coupon_U_DTO) =>
 {
     APIResponse response = new();
-
 
     var validationResult = await _validation.ValidateAsync(coupon_U_DTO);
 
@@ -124,9 +123,23 @@ app.MapPut("/api/coupon", async (IMapper _mapper,
 
 app.MapDelete("/api/coupon/{id:int}", (int id) =>
 {
+    APIResponse response = new() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
 
+    Coupon couponFromStore = CouponStore.couponList.FirstOrDefault(u => u.Id == id);
+    if (couponFromStore != null)
+    {
+        CouponStore.couponList.Remove(couponFromStore);
+        response.IsSuccess = true;
+        response.StatusCode = HttpStatusCode.NoContent;
+        return Results.Ok(response);
+    }
+    else
+    {
+        response.ErrorMessages.Add("Invalid Id");
+        return Results.BadRequest(response);
+    }
 }
-).WithName("DeleteCoupon");
+);
 
 app.Run();
 
